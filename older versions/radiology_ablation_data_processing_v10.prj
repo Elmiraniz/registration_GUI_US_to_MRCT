@@ -1,0 +1,84 @@
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration build-checksum="1647435546" file="/Users/elmiraghahramani/Library/Mobile Documents/com~apple~CloudDocs/UC/Lab/Echo Decorrelation/Radiology ablation cases/Registration GUI/GUI/radiology_ablation_data_processing_v10.prj" location="/Users/elmiraghahramani/Library/Mobile Documents/com~apple~CloudDocs/UC/Lab/Echo Decorrelation/Radiology ablation cases/Registration GUI/GUI" name="radiology_ablation_data_processing_v10" target="target.mlapps" target-name="Package App">
+    <param.appname>radiology_ablation_data_processing_v10</param.appname>
+    <param.authnamewatermark>Elmira Ghahramani Z</param.authnamewatermark>
+    <param.email>elmira.ghahramani@gmail.com</param.email>
+    <param.company />
+    <param.icon />
+    <param.icons />
+    <param.summary />
+    <param.description>This GUI is used for registration between the ultrasound and post-op MR/CT imaging from the percutaneous microwave ablation of liver tumor.</param.description>
+    <param.screenshot>/private/var/folders/mq/2m2rd5h112v8vr5mhrwbt3l80000gn/T/tp0ccad669_4111_4d7b_8e9d_c40e7aa4124d.png</param.screenshot>
+    <param.version>1.0</param.version>
+    <param.products.name />
+    <param.products.id />
+    <param.products.version />
+    <param.platforms />
+    <param.output>${PROJECT_ROOT}</param.output>
+    <param.guid>6b31c298-0bdc-493e-a53f-3bb1725c6c60</param.guid>
+    <unset>
+      <param.company />
+      <param.icon />
+      <param.icons />
+      <param.summary />
+      <param.version />
+      <param.products.name />
+      <param.products.id />
+      <param.products.version />
+      <param.platforms />
+      <param.output />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}/radiology_ablation_data_processing_v10.mlapp</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}/CT.png</file>
+      <file>${PROJECT_ROOT}/ROC_analysis.m</file>
+      <file>${PROJECT_ROOT}/US.png</file>
+      <file>${PROJECT_ROOT}/apex.png</file>
+      <file>${PROJECT_ROOT}/axes_photo.jpeg</file>
+      <file>${PROJECT_ROOT}/func1.m</file>
+      <file>${PROJECT_ROOT}/func2.m</file>
+      <file>${PROJECT_ROOT}/griddata.m</file>
+      <file>${PROJECT_ROOT}/imoverlay.m</file>
+      <file>${PROJECT_ROOT}/mri.png</file>
+      <file>${PROJECT_ROOT}/photo.png</file>
+      <file>${PROJECT_ROOT}/prec_rec.m</file>
+      <file>${PROJECT_ROOT}/read_1day_post_ablation_image_vol.m</file>
+      <file>${PROJECT_ROOT}/register.m</file>
+      <file>${PROJECT_ROOT}/scale_decorrelation_map.m</file>
+    </fileset.depfun>
+    <fileset.resources />
+    <fileset.package />
+    <build-deliverables>
+      <file location="/Users/elmiraghahramani/Library/Mobile Documents/com~apple~CloudDocs/UC/Lab/Echo Decorrelation/Radiology ablation cases/Registration GUI" name="GUI" optional="false">/Users/elmiraghahramani/Library/Mobile Documents/com~apple~CloudDocs/UC/Lab/Echo Decorrelation/Radiology ablation cases/Registration GUI/GUI</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>/Applications/MATLAB_R2021a.app</root>
+      <toolboxes>
+        <toolbox name="neuralnetwork" />
+      </toolboxes>
+      <toolbox>
+        <neuralnetwork>
+          <enabled>true</enabled>
+        </neuralnetwork>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>true</unix>
+      <mac>true</mac>
+      <windows>false</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.16</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>maci64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>

@@ -1,0 +1,167 @@
+function [registered_vol, load_registration_parameters_flag] = register(MR_obj, imaging_vol, xyz_range, apex_loc, apex_to_needle_dist, rotation_order, input_rotation_angles, output_path)
+%%%
+% Author: Elmira Ghahramani Z.
+% Last update: 01/25/2023
+%%%
+
+compute_registration_flag = true;
+load_registration_parameters_flag = false;
+
+[registered_vol,compute_registration_flag,load_registration_parameters_flag] = ...
+            func1(apex_loc, apex_to_needle_dist, rotation_order, ...
+            input_rotation_angles, output_path);       
+
+if compute_registration_flag
+    %% MR/CT information
+    Imdy = MR_obj.dxdydz(1);    % pixel spacing, image rows (mm)
+    Imdx = MR_obj.dxdydz(2);    % pixel spacing, image columns (mm)
+    Imdz = MR_obj.dxdydz(3);   % slice spacing (mm)
+    
+    Ny = size(MR_obj.vol,1);
+    Nx = size(MR_obj.vol,2);
+    Nz = size(MR_obj.vol,3);
+    
+    % coordinate vectors, mm
+    Imy = (0:Ny-1)*Imdy; %y = y - mean(y);
+    Imx = (0:Nx-1)*Imdx; %x = x - mean(x);
+    Imz = (0:Nz-1)*Imdz; %z = z - mean(z);
+    
+    [Y,X,Z] = ndgrid(Imy,Imx,Imz);
+    X = double(X);
+    Y = double(Y);
+    Z = double(Z);
+    
+    %% US preparation
+    rotation_order_cases  = ...
+        {'x -> y -> z',...
+        'x -> z -> y',...
+        'y -> x -> z',...
+        'y -> z -> x',...
+        'z -> x -> y',...
+        'z -> y -> x'};
+    
+    rmax_thresh = 160;
+    
+    x_range = xyz_range{1};
+    y_range = xyz_range{2};
+    z_range = xyz_range{3};
+    
+    if max(z_range(:)) > rmax_thresh
+        imaging_vol = imaging_vol(1:rmax_thresh,:,:,:);
+        z_range = z_range(1:rmax_thresh);
+    end
+    [z,y,x] = ndgrid(z_range,y_range,x_range);
+    
+    xUS = round(apex_loc(1));
+    yUS = round(apex_loc(2));
+    
+    if isempty(apex_to_needle_dist)
+        apex_to_needle_dist = 0;
+    end
+    zUS = round(apex_loc(3)+apex_to_needle_dist/Imdz);
+    
+    apex_pos = [double(Imx(xUS)),double(Imy(yUS)),double(Imz(zUS))];
+    Xc = apex_pos(1);
+    Yc = apex_pos(2);
+    Zc = apex_pos(3);
+    
+    rotation_angles = pi*[input_rotation_angles(1),input_rotation_angles(2),input_rotation_angles(3)]/180;
+    
+    yaw = rotation_angles(1);     %around x axis (range)
+    pitch = rotation_angles(2);   %around y axis (azimuth)
+    roll = rotation_angles(3);    %around z axis (elevation)
+    
+    Rx = [1 0 0; 0 cos(yaw) -sin(yaw); 0 sin(yaw) cos(yaw)];
+    Ry = [cos(pitch) 0 sin(pitch); 0 1 0; -sin(pitch) 0 cos(pitch)];
+    Rz = [cos(roll) -sin(roll) 0; sin(roll) cos(roll) 0; 0 0 1];
+    
+    %     switch rotation_order
+    %         case rotation_order_cases{1}
+    %             rotation_transform = Rx*Ry*Rz;
+    %         case rotation_order_cases{2}
+    %             rotation_transform = Rx*Rz*Ry;
+    %         case rotation_order_cases{3}
+    %             rotation_transform = Ry*Rx*Rz;
+    %         case rotation_order_cases{4}
+    %             rotation_transform = Ry*Rz*Rx;
+    %         case rotation_order_cases{5}
+    %             rotation_transform = Rz*Rx*Ry;
+    %         case rotation_order_cases{6}
+    %             rotation_transform = Rz*Ry*Rx;
+    %     end
+    
+    switch rotation_order
+        case rotation_order_cases{1}
+            rotation_transform = Rz*Ry*Rx;
+        case rotation_order_cases{2}
+            rotation_transform = Ry*Rz*Rx;
+        case rotation_order_cases{3}
+            rotation_transform = Rz*Rx*Ry;
+        case rotation_order_cases{4}
+            rotation_transform = Rx*Rz*Ry;
+        case rotation_order_cases{5}
+            rotation_transform = Ry*Rx*Rz;
+        case rotation_order_cases{6}
+            rotation_transform = Rx*Ry*Rz;
+    end
+    
+    rotatedxyz = rotation_transform*[x(:)';y(:)';z(:)'];
+    xr = rotatedxyz(1,:);
+    yr = rotatedxyz(2,:);
+    zr = rotatedxyz(3,:);
+    
+    %% US registration
+    % registered US coordinates Xr, Yr, Zr in MR/CT coordinate system
+    Xr = Xc + yr; Xr = reshape(Xr,size(x));
+    Yr = Yc + zr; Yr = reshape(Yr,size(x));
+    Zr = Zc + xr; Zr = reshape(Zr,size(x));
+    
+    if min(Xr(:)) <= 0, minXr = 0; else, minXr = min(Xr(:)); end
+    if min(Yr(:)) <= 0, minYr = 0; else, minYr = min(Yr(:)); end
+    if min(Zr(:)) <= 0, minZr = 0; else, minZr = min(Zr(:)); end
+    
+    if max(Xr(:)) >= max(X(:)), maxXr = max(X(:)); else, maxXr = max(Xr(:)); end
+    if max(Yr(:)) >= max(Y(:)), maxYr = max(Y(:)); else, maxYr = max(Yr(:)); end
+    if max(Zr(:)) >= max(Z(:)), maxZr = max(Z(:)); else, maxZr = max(Zr(:)); end
+    
+    % finding indces of registered US boundary
+    XinterpInd1 = find(abs(X(1,:,1)-minXr)<Imdx);
+    XinterpInd2 = find(abs(X(1,:,1)-maxXr)<Imdx);
+    YinterpInd1 = find(abs(Y(:,1,1)-minYr)<Imdy);
+    YinterpInd2 = find(abs(Y(:,1,1)-maxYr)<Imdy);
+    ZinterpInd1 = find(abs(Z(1,1,:)-minZr)<Imdz);
+    ZinterpInd2 = find(abs(Z(1,1,:)-maxZr)<Imdz);
+    
+    interpRegX = X(YinterpInd1(1):YinterpInd2(1),...
+        XinterpInd1(1):XinterpInd2(1), ZinterpInd1(1):ZinterpInd2(1));
+    interpRegY = Y(YinterpInd1(1):YinterpInd2(1),...
+        XinterpInd1(1):XinterpInd2(1), ZinterpInd1(1):ZinterpInd2(1));
+    interpRegZ = Z(YinterpInd1(1):YinterpInd2(1),...
+        XinterpInd1(1):XinterpInd2(1), ZinterpInd1(1):ZinterpInd2(1));
+    
+    %     if strcmp(volume_name,'Bmode')
+    inside_echo_ind = find(imaging_vol ~= -inf | imaging_vol ~= 0 | ~isnan(imaging_vol));
+    %     else
+    %         inside_echo_ind = find(~isnan(imaging_vol));
+    %     end
+    
+    disp('Interpolation in progress!');
+    tic
+    registered_volume = ...
+        griddata(Xr(inside_echo_ind),Yr(inside_echo_ind),Zr(inside_echo_ind),...
+        imaging_vol(inside_echo_ind),interpRegX(:),interpRegY(:),interpRegZ(:));%double(X),double(Y),double(Z));
+    toc
+    disp('Interpolation is done!');
+    
+    registered_volume = reshape(registered_volume,size(interpRegX));
+    temp = zeros(size(MR_obj.vol));
+    temp(YinterpInd1(1):YinterpInd2(1),...
+        XinterpInd1(1):XinterpInd2(1), ZinterpInd1(1):ZinterpInd2(1)) = registered_volume;
+    
+    registered_vol = temp;
+    registered_vol(registered_vol==-Inf) = 0;
+    registered_vol(isnan(registered_vol)) = 0;
+    
+    func2(registered_vol,output_path);
+end
+end
